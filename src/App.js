@@ -6,28 +6,33 @@ class App extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			rates: {},
 			countries: [],
-			numInput: 0,
-			defaultCurrency: ''
+			numInput: 0
 		};
 	}
 
 	componentDidMount() {
 		this.getData();
+		this.changeRatesToSelectedCurr();
 	}
 
 	getData = async () => {
 		const req = `http://data.fixer.io/api/latest?access_key=bfcc0308765848dee5861697e084d026`;
 		const res = await fetch(req);
 		const jsonData = await res.json();
-		this.setState(
+		this.setState({
+			rates: jsonData.rates,
+			byUSDRate: jsonData.rates.EUR / jsonData.rates.USD, //hardcode for USD default
+			countries: Object.keys(jsonData.rates)
+		});
+	};
+
+	changeRatesToSelectedCurr = () => {
+		return this.setState(
 			{
-				rates: jsonData.rates,
-				byUSDRate: jsonData.rates.EUR / jsonData.rates.USD, //hardcode for USD default
-				countries: Object.keys(jsonData.rates)
+				defaultCurr: this.state.convertedCurrency / this.state.selectedCurrency
 			},
-			() => console.log('what is dafualt now', this.state.rates)
+			() => console.log('superman', this.state.defaultCurr)
 		);
 	};
 
@@ -37,20 +42,39 @@ class App extends React.Component {
 		);
 	};
 
-	handleDefaultCurrency = e => {
+	handleSelectedCurrency = e => {
+		this.setState(
+			{
+				selectedCountry: e.target.value
+			},
+			() => this.setSelectedCurrency()
+		);
+	};
+
+	setSelectedCurrency = () => {
 		this.setState({
-			selectDefaultCountry: e.target.value
+			selectedCurrency: this.state.rates[this.state.selectedCountry]
 		});
 	};
 
 	handleConvertedCurrency = e => {
+		this.setState(
+			{
+				convertedCountry: e.target.value
+			},
+			() => this.setConvertedCurrency()
+		);
+	};
+
+	setConvertedCurrency = () => {
 		this.setState({
-			selectConvertedCountry: e.target.value
+			convertedCurrency: this.state.rates[this.state.convertedCountry]
 		});
 	};
 
 	convertNumInput = num => {
-		const convertValue = num / this.state.byUSDRate;
+		const convertValue =
+			num / (this.state.selectedCurrency / this.state.convertedCurrency);
 		return convertValue;
 	};
 
@@ -82,8 +106,8 @@ class App extends React.Component {
 				<InputGroup className='mb-3'>
 					<InputGroup.Prepend>
 						<select
-							value={this.state.selectDefaultCountry}
-							onChange={this.handleDefaultCurrency}
+							value={this.state.selectedCountry}
+							onChange={this.handleSelectedCurrency}
 						>
 							{this.defaultCountryCurrency()}
 						</select>
