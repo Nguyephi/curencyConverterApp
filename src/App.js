@@ -8,7 +8,8 @@ class App extends React.Component {
 		this.state = {
 			rates: {},
 			countries: [],
-			numInput: 0
+			numInput: 0,
+			defaultCurrency: ''
 		};
 	}
 
@@ -20,17 +21,32 @@ class App extends React.Component {
 		const req = `http://data.fixer.io/api/latest?access_key=bfcc0308765848dee5861697e084d026`;
 		const res = await fetch(req);
 		const jsonData = await res.json();
-		this.setState({
-			rates: jsonData.rates,
-			defaultRate: jsonData.rates.EUR / jsonData.rates.USD, //.88
-			countries: Object.keys(jsonData.rates)
-		});
+		this.setState(
+			{
+				rates: jsonData.rates,
+				byUSDRate: jsonData.rates.EUR / jsonData.rates.USD, //hardcode for USD default
+				countries: Object.keys(jsonData.rates)
+			},
+			() => console.log('what is dafualt now', this.state.rates)
+		);
 	};
 
 	handleInputChange = e => {
 		this.setState({ numInput: e.target.value }, () =>
 			this.convertNumInput(this.state.numInput)
 		);
+	};
+
+	handleDefaultCurrency = e => {
+		this.setState({
+			selectDefaultCountry: e.target.value
+		});
+	};
+
+	handleConvertedCurrency = e => {
+		this.setState({
+			selectConvertedCountry: e.target.value
+		});
 	};
 
 	convertNumInput = num => {
@@ -48,7 +64,7 @@ class App extends React.Component {
 		});
 	};
 
-	defaultCountry = () => {
+	defaultCountryCurrency = () => {
 		return this.state.countries.map((country, idx) => {
 			return (
 				<option key={idx} value={country}>
@@ -65,7 +81,12 @@ class App extends React.Component {
 				<h3>Please select a default currency.</h3>
 				<InputGroup className='mb-3'>
 					<InputGroup.Prepend>
-						<select>{this.defaultCountry()}</select>
+						<select
+							value={this.state.selectDefaultCountry}
+							onChange={this.handleDefaultCurrency}
+						>
+							{this.defaultCountryCurrency()}
+						</select>
 					</InputGroup.Prepend>
 				</InputGroup>
 				<p>
@@ -74,7 +95,12 @@ class App extends React.Component {
 				</p>
 				<InputGroup className='mb-3'>
 					<InputGroup.Prepend>
-						<select>{this.selectCountry()}</select>
+						<select
+							value={this.state.selectConvertedCurrency}
+							onChange={this.handleConvertedCurrency}
+						>
+							{this.selectCountry()}
+						</select>
 					</InputGroup.Prepend>
 					<FormControl
 						type='number'
