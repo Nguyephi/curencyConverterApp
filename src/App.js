@@ -7,7 +7,9 @@ class App extends React.Component {
 		super(props);
 		this.state = {
 			countries: [],
-			numInput: 0
+			numInput: '',
+			isCountrySelected: 'Country:',
+			changeParam: 'latest'
 		};
 	}
 
@@ -17,23 +19,28 @@ class App extends React.Component {
 	}
 
 	getData = async () => {
-		const req = `http://data.fixer.io/api/latest?access_key=bfcc0308765848dee5861697e084d026`;
+		const { changeParam } = this.state;
+		const req = `http://data.fixer.io/api/${changeParam}?access_key=bfcc0308765848dee5861697e084d026`;
 		const res = await fetch(req);
 		const jsonData = await res.json();
 		this.setState({
 			rates: jsonData.rates,
-			byUSDRate: jsonData.rates.EUR / jsonData.rates.USD, //hardcode for USD default
 			countries: Object.keys(jsonData.rates)
 		});
 	};
 
+	// getCurrencyName() {
+	//   this.setState({
+	//     changeParam: 'symbols'
+	//   })
+	// }
+	//this api is for type of currency
+	// http://data.fixer.io/api/symbols?access_key=bfcc0308765848dee5861697e084d026
+
 	changeRatesToSelectedCurr = () => {
-		return this.setState(
-			{
-				defaultCurr: this.state.convertedCurrency / this.state.selectedCurrency
-			},
-			() => console.log('superman', this.state.defaultCurr)
-		);
+		return this.setState({
+			defaultCurr: this.state.convertedCurrency / this.state.selectedCurrency
+		});
 	};
 
 	handleInputChange = e => {
@@ -74,8 +81,13 @@ class App extends React.Component {
 
 	convertNumInput = num => {
 		const convertValue =
-			num / (this.state.selectedCurrency / this.state.convertedCurrency);
-		return convertValue;
+			num / (this.state.convertedCurrency / this.state.selectedCurrency);
+		if (convertValue === 0) {
+			return convertValue.toFixed(2);
+		} else if (convertValue < 0.009) {
+			return convertValue.toFixed(7);
+		}
+		return convertValue.toFixed(2);
 	};
 
 	selectCountry = () => {
@@ -100,41 +112,54 @@ class App extends React.Component {
 
 	render() {
 		return (
-			<div className='container'>
-				<h1> Currency Converter</h1>
-				<h3>Please select a default currency.</h3>
-				<InputGroup className='mb-3'>
-					<InputGroup.Prepend>
-						<select
-							value={this.state.selectedCountry}
-							onChange={this.handleSelectedCurrency}
-						>
-							{this.defaultCountryCurrency()}
-						</select>
-					</InputGroup.Prepend>
-				</InputGroup>
-				<p>
-					The value in the currency of choice will be converted to the default
-					currency.
-				</p>
-				<InputGroup className='mb-3'>
-					<InputGroup.Prepend>
-						<select
-							value={this.state.selectConvertedCurrency}
-							onChange={this.handleConvertedCurrency}
-						>
-							{this.selectCountry()}
-						</select>
-					</InputGroup.Prepend>
-					<FormControl
-						type='number'
-						aria-label='Default'
-						aria-describedby='inputGroup-sizing-default'
-						onChange={this.handleInputChange}
-						value={this.state.numInput}
-					/>
-				</InputGroup>
-				<p>{this.convertNumInput(this.state.numInput)}</p>
+			<div className='appBackground'>
+				<div className='container'>
+					<div className='contentColor'>
+						<h1 style={{ marginTop: '15px' }}> Currency Converter</h1>
+						<h3>Please select a default currency.</h3>
+						<div style={{ display: 'inline-flex' }}>
+							<InputGroup className='mb-3'>
+								<InputGroup.Prepend>
+									<select
+										style={{ height: '37px' }}
+										value={this.state.selectedCountry}
+										onChange={this.handleSelectedCurrency}
+									>
+										<option>{this.state.isCountrySelected}</option>
+										{this.defaultCountryCurrency()}
+									</select>
+								</InputGroup.Prepend>
+							</InputGroup>
+						</div>
+						<p>
+							The value in the currency of choice will be converted to the
+							default currency.
+						</p>
+						<div style={{ width: '30em', display: 'inline-flex' }}>
+							<InputGroup className='mb-3'>
+								<InputGroup.Prepend>
+									<select
+										value={this.state.selectConvertedCurrency}
+										onChange={this.handleConvertedCurrency}
+									>
+										<option>{this.state.isCountrySelected}</option>
+										{this.selectCountry()}
+									</select>
+								</InputGroup.Prepend>
+								<FormControl
+									type='number'
+									aria-label='Default'
+									aria-describedby='inputGroup-sizing-default'
+									onChange={this.handleInputChange}
+									value={this.state.numInput}
+								/>
+							</InputGroup>
+						</div>
+						{this.convertNumInput(this.state.numInput) > 0 && (
+							<p>{this.convertNumInput(this.state.numInput)}</p>
+						)}
+					</div>
+				</div>
 			</div>
 		);
 	}
